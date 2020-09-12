@@ -1,0 +1,4 @@
+module FailureRepresentation
+
+
+end # module
