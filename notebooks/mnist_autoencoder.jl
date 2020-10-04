@@ -25,7 +25,7 @@ begin
 end
 
 # ╔═╡ 5771c7e0-054c-11eb-3cb4-075289b865c0
-md"# Variational autoencoder for MNIST"
+md"# Autoencoder for MNIST"
 
 # ╔═╡ 06ab3f50-0554-11eb-1eb0-d536ab6204cf
 md"## Training arguments"
