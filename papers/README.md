@@ -21,3 +21,8 @@ Continual AI - Non-profit research organization - https://www.continualai.org
 DeepMind  - Enabling Continual Learning in Neural Networks https://deepmind.com/blog/article/enabling-continual-learning-in-neural-networks
 
 Continual & Transfer Learning DeepMind - https://deepmind.com/research?filters=%7B%22tags%22:%5B%22Continual%20%26%20transfer%20learning%22%5D%7D
+
+
+## Other papers
+
+Y. Ganin et al., Domain-Adversarial Training of Neural Networks https://arxiv.org/abs/1505.07818
