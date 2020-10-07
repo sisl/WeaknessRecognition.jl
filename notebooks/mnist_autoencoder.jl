@@ -10,18 +10,13 @@ try using AddPackage catch; using Pkg; Pkg.add("AddPackage"); using AddPackage e
 # ╔═╡ 1ff5f7d0-0553-11eb-13f4-4fa1c8cfa104
 begin
 	using Base.Iterators: partition
-	@add using CUDAapi
+	@add using CUDA
 	@add using Images
 	@add using Parameters
 	@add using Flux
 	using Flux.Data.MNIST
 	using Flux: @epochs, mse, throttle
 	using Statistics
-
-	if has_cuda()
-		@add using CuArrays
-		CuArrays.allowscalar(false)
-	end
 end
 
 # ╔═╡ 5771c7e0-054c-11eb-3cb4-075289b865c0
