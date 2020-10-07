@@ -10,7 +10,8 @@ try using AddPackage catch; using Pkg; Pkg.add("AddPackage"); using AddPackage e
 # ╔═╡ df4bc620-055b-11eb-39c7-e952028567da
 begin
 	using Base.Iterators: repeated
-	@add using CUDAapi
+	@add using Colors
+	@add using CUDA
 	@add using Images
 	@add using MLDatasets
 	@add using Parameters
@@ -18,11 +19,6 @@ begin
 	using Flux.Data: DataLoader
 	using Flux: @epochs, onehotbatch, onecold, logitcrossentropy, throttle
 	using Statistics
-
-	if has_cuda()
-		@add using CuArrays
-		CuArrays.allowscalar(false)
-	end
 end
 
 # ╔═╡ d7a1f38e-055b-11eb-31ef-55de28cda23d
