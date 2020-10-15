@@ -22,6 +22,7 @@ DeepMind  - Enabling Continual Learning in Neural Networks https://deepmind.com/
 
 Continual & Transfer Learning DeepMind - https://deepmind.com/research?filters=%7B%22tags%22:%5B%22Continual%20%26%20transfer%20learning%22%5D%7D
 
+Repo with Incremental Learning / Lifelong learning papers - https://github.com/xialeiliu/Awesome-Incremental-Learning
 
 ## Other papers
 
