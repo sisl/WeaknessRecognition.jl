@@ -6,6 +6,7 @@ using Base.Iterators: partition
 using BSON: @save, @load
 using CUDA
 using Images
+using NNlib
 using Parameters
 using Flux
 using Flux.Data.MNIST
@@ -90,6 +91,7 @@ end
 
 function trainandsave(; kwargs...)
     m, args, cost = train(; kwargs...)
+    m = cpu(m)
     @save "models/autoencoder.bson" m
 end
 

@@ -12,6 +12,7 @@ using Colors
 using CUDA
 using Images
 using MLDatasets
+using NNlib
 using Parameters
 using Flux
 using Flux.Data: DataLoader
@@ -110,7 +111,8 @@ end
 
 function trainandsave(; kwargs...)
     m, traindata, testdata = train(; kwargs...)
-    @save "sut.bson" m
+    m = cpu(m)
+    @save "models/sut.bson" m
 end
 
 
