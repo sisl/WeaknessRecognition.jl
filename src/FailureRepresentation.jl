@@ -8,6 +8,7 @@ using .Autoencoder
 using .SystemUnderTest
 using CUDA
 using Flux
+using Flux: onecold
 using Statistics
 
 export
@@ -21,12 +22,13 @@ export
 
 
 function design_iteration(; T=1, iters=1, m=100, k=10)
+    Core.eval(Main, :(import NNlib)) # required for .load
     sut = SystemUnderTest.load("models/sut.bson")
     autoencoder = Autoencoder.load("models/autoencoder.bson")
 
     _, testdata = SystemUnderTest.getdata()
     X, Y = rand(testdata, m) # `m` samples of testdata
-    @info string("Sampled failure rate: ", 1 - mean(onecold(sut(X)) .== onecold(Y)))
+    @info string("Sampled failure rate: ", round(1 - mean(onecold(sut(X)) .== onecold(Y)), digits=3))
 
     # model design iteration: loop t
     for t in 1:T

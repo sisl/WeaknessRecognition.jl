@@ -9,6 +9,7 @@ using FailureRepresentation
 
 # ╔═╡ 5c706e30-19b1-11eb-18ad-5190eca820b1
 begin
+	using BSON
 	using BSON: load
 	using CUDA
 	using FailureRepresentation.SystemUnderTest
@@ -18,6 +19,9 @@ begin
 	using NNlib
 	Core.eval(Main, :(import Flux)) # required for .load
 end
+
+# ╔═╡ 54164520-19b6-11eb-376c-b5246d05c3a6
+MODEL = BSON.load("../models/sut.bson")[:m]
 
 # ╔═╡ 30bd5680-19b2-11eb-3ed2-81593376e639
 sut = SystemUnderTest.load("../models/sut.bson")
@@ -49,6 +53,7 @@ Autoencoder.sample(autoencoder, 3)
 # ╔═╡ Cell order:
 # ╠═4af6dbd0-19b1-11eb-059b-c7ac5d8c4e0d
 # ╠═5c706e30-19b1-11eb-18ad-5190eca820b1
+# ╠═54164520-19b6-11eb-376c-b5246d05c3a6
 # ╠═30bd5680-19b2-11eb-3ed2-81593376e639
 # ╠═1732d5e0-19b3-11eb-3b9d-8b5b61fc38ae
 # ╠═24ef3930-19b3-11eb-0d9d-e3a0733ba1da
