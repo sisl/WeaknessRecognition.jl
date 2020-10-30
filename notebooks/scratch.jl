@@ -90,9 +90,6 @@ end;
 # 	return max_softmax - true_softmax
 # end;
 
-# ╔═╡ 009237b0-1a15-11eb-3e6c-9ff29ea9a32a
-bar(softmax(sut(X[:,1])))
-
 # ╔═╡ 99924160-1a35-11eb-0df0-ff718845bd4b
 Xi, Yi = rand(testdata, 10)
 
@@ -101,6 +98,16 @@ Xi, Yi = rand(testdata, 10)
 
 # ╔═╡ 769264b0-1a30-11eb-3742-7f8badcea17f
 Δsoftmax(sut, Xi, Yi)
+
+# ╔═╡ 009237b0-1a15-11eb-3e6c-9ff29ea9a32a
+begin
+	idx = 6
+	bar(0:9, Yi[:,idx], xticks=0:9, fillalpha=0.6, label="true")
+	bar!(0:9, softmax(sut(Xi[:,idx])), fillalpha=0.6, label="prediction")
+end
+
+# ╔═╡ e083cc00-1ac7-11eb-103a-13fb6fb3d586
+Autoencoder.img(Xi[:,idx])'
 
 # ╔═╡ 9f53f2fe-1a35-11eb-241a-15d6dc131650
 Δsoftmax(sut, Xi, Yi)
@@ -121,12 +128,13 @@ Xi, Yi = rand(testdata, 10)
 # ╠═f4fbfc40-19b2-11eb-0ee1-0b3e9ece6008
 # ╠═8cde0240-1a14-11eb-0274-090f1dcdeb0d
 # ╠═d4fcfdae-1a14-11eb-0a76-5dfe76d1754a
-# ╠═b6901270-1a16-11eb-09a2-c1073bff3f8f
+# ╟─b6901270-1a16-11eb-09a2-c1073bff3f8f
 # ╠═95bd6740-1a17-11eb-3372-21bac6614f53
 # ╠═7b8cf5c0-1a30-11eb-149c-5fbf3a4d9a12
 # ╠═a9de0db0-1a2b-11eb-2144-e5025a1a9e5e
 # ╠═769264b0-1a30-11eb-3742-7f8badcea17f
 # ╠═805fa7c0-1a15-11eb-2200-a166cafe9431
 # ╠═009237b0-1a15-11eb-3e6c-9ff29ea9a32a
+# ╠═e083cc00-1ac7-11eb-103a-13fb6fb3d586
 # ╠═99924160-1a35-11eb-0df0-ff718845bd4b
 # ╠═9f53f2fe-1a35-11eb-241a-15d6dc131650
