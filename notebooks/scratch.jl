@@ -80,15 +80,18 @@ function Δsoftmax(model, x::Matrix, y)
 	return vec(max_softmax - true_softmax)
 end;
 
-# ╔═╡ 805fa7c0-1a15-11eb-2200-a166cafe9431
-# function Δsoftmax_expanded(model, x, y)
-# 	probs = softmax(model(x))
-# 	ŷᵢₙₓ = onecold(probs)
-# 	yᵢₙₓ = onecold(y)
-# 	max_softmax = [probs[r,c] for (r,c) in zip(onecold(probs), 1:size(probs,2))]
-# 	true_softmax = [probs[r,c] for (r,c) in zip(onecold(Yi), 1:size(probs,2))]
-# 	return max_softmax - true_softmax
-# end;
+# ╔═╡ 009237b0-1a15-11eb-3e6c-9ff29ea9a32a
+begin
+	idx = 1
+	bar(0:9, Y[:,idx], xticks=0:9, fillalpha=0.6, label="true")
+	bar!(0:9, softmax(sut(X[:,idx])), fillalpha=0.6, label="prediction")
+end
+
+# ╔═╡ e083cc00-1ac7-11eb-103a-13fb6fb3d586
+Autoencoder.img(X[:,idx])'
+
+# ╔═╡ 0e50baa0-1ad5-11eb-1603-cba64a9c41e7
+Δsoftmax(sut, X[:, idx], Y[:, idx])
 
 # ╔═╡ 99924160-1a35-11eb-0df0-ff718845bd4b
 Xi, Yi = rand(testdata, 10)
@@ -99,18 +102,23 @@ Xi, Yi = rand(testdata, 10)
 # ╔═╡ 769264b0-1a30-11eb-3742-7f8badcea17f
 Δsoftmax(sut, Xi, Yi)
 
-# ╔═╡ 009237b0-1a15-11eb-3e6c-9ff29ea9a32a
-begin
-	idx = 6
-	bar(0:9, Yi[:,idx], xticks=0:9, fillalpha=0.6, label="true")
-	bar!(0:9, softmax(sut(Xi[:,idx])), fillalpha=0.6, label="prediction")
-end
-
-# ╔═╡ e083cc00-1ac7-11eb-103a-13fb6fb3d586
-Autoencoder.img(Xi[:,idx])'
-
 # ╔═╡ 9f53f2fe-1a35-11eb-241a-15d6dc131650
 Δsoftmax(sut, Xi, Yi)
+
+# ╔═╡ 2059e2d0-1ad5-11eb-21c5-abf90763e4b9
+md"""
+---
+"""
+
+# ╔═╡ 805fa7c0-1a15-11eb-2200-a166cafe9431
+# function Δsoftmax_expanded(model, x, y)
+# 	probs = softmax(model(x))
+# 	ŷᵢₙₓ = onecold(probs)
+# 	yᵢₙₓ = onecold(y)
+# 	max_softmax = [probs[r,c] for (r,c) in zip(onecold(probs), 1:size(probs,2))]
+# 	true_softmax = [probs[r,c] for (r,c) in zip(onecold(Yi), 1:size(probs,2))]
+# 	return max_softmax - true_softmax
+# end;
 
 # ╔═╡ Cell order:
 # ╠═4af6dbd0-19b1-11eb-059b-c7ac5d8c4e0d
@@ -133,8 +141,10 @@ Autoencoder.img(Xi[:,idx])'
 # ╠═7b8cf5c0-1a30-11eb-149c-5fbf3a4d9a12
 # ╠═a9de0db0-1a2b-11eb-2144-e5025a1a9e5e
 # ╠═769264b0-1a30-11eb-3742-7f8badcea17f
-# ╠═805fa7c0-1a15-11eb-2200-a166cafe9431
 # ╠═009237b0-1a15-11eb-3e6c-9ff29ea9a32a
 # ╠═e083cc00-1ac7-11eb-103a-13fb6fb3d586
+# ╠═0e50baa0-1ad5-11eb-1603-cba64a9c41e7
 # ╠═99924160-1a35-11eb-0df0-ff718845bd4b
 # ╠═9f53f2fe-1a35-11eb-241a-15d6dc131650
+# ╟─2059e2d0-1ad5-11eb-21c5-abf90763e4b9
+# ╠═805fa7c0-1a15-11eb-2200-a166cafe9431
