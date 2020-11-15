@@ -3,7 +3,8 @@ module Autoencoder
 export trainandsave, load
 
 using Base.Iterators: partition
-using BSON: @save, @load
+using BSON
+using BSON: @save
 using CUDA
 using Images
 using NNlib
@@ -49,8 +50,13 @@ function train(; kwargs...)
     # In this case, the input dimension is 28^2 and the output dimension of the
     # encoder is 32. This implies that the coding is a compressed representation.
     # We can make lossy compression via this `encoder`.
-    encoder = Dense(28^2, args.N, leakyrelu) |> gpu
-    decoder = Dense(args.N, 28^2, leakyrelu) |> gpu
+    intermediate = 28^2 ÷ 2
+    encoder = Chain(
+        Dense(28^2, intermediate, leakyrelu) |> gpu,
+        Dense(intermediate, args.N, leakyrelu) |> gpu)
+    decoder = Chain(
+        Dense(args.N, intermediate, leakyrelu) |> gpu,
+        Dense(intermediate, 28^2, leakyrelu) |> gpu)
 
     # define main model as a Chain of encoder and decoder models
     m = Chain(encoder, decoder)
@@ -64,7 +70,7 @@ function train(; kwargs...)
 
     @epochs args.epochs Flux.train!(loss, params(m), zip(traindata), opt, cb=callback)
 
-    return m, args, callback
+    return m, encoder, decoder
 end
 
 
@@ -90,15 +96,19 @@ end
 
 
 function trainandsave(; kwargs...)
-    m, args, cost = train(; kwargs...)
+    m, encoder, decoder = train(; kwargs...)
     m = cpu(m)
     @save "models/autoencoder.bson" m
+    encoder = cpu(encoder)
+    @save "models/encoder.bson" encoder
+    decoder = cpu(decoder)
+    @save "models/decoder.bson" decoder
 end
 
 
-function load(model_filename_bson)
-    @load model_filename_bson m
-    return m
+function load(model_filename_bson, sym=:m)
+    model = BSON.load(model_filename_bson)[sym]
+    return model
 end
 
 end # module
