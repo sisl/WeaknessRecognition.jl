@@ -2,3 +2,8 @@ name = "FailureRepresentation"
 uuid = "04a37978-a56a-4ee6-8c04-5ef0dd3b5939"
 authors = ["Robert Moss <mossr@cs.stanford.edu>"]
 version = "0.1.0"
+
+[deps]
+MLBase = "f0e99cf1-93fa-52ec-9ecc-5026115318e0"
+ROCAnalysis = "f535d66d-59bb-5153-8d2b-ef0a426c6aff"
+Seaborn = "d2ef9438-c967-53ab-8060-373fdd9e13eb"

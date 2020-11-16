@@ -8,9 +8,12 @@ include("utils.jl")
 using .Adversary
 using .Autoencoder
 using .SystemUnderTest
+using BSON: @save
 using CUDA
 using Flux
 using Flux: onecold
+using Parameters
+using Random
 using Statistics
 
 export
@@ -21,6 +24,12 @@ export
     Autoencoder,
     load,
     autoencoder
+
+
+@with_kw mutable struct Metrics
+    precision = [] # of examples recognized as failures, what percent ARE failures?
+    recall = [] # of all examples that are failures, what percent are correctly classified?
+end
 
 
 """
@@ -45,22 +54,23 @@ failure_rate(model, X, Y) = round(1 - mean(onecold(model(X)) .== onecold(Y)), di
 """
 Main model design iteration loop. See diagram for details.
 """
-function design_iteration(; T=1, iters=1, m=1000, k=10)
+function design_iteration(; T=1, iters=1, m=500, k=NaN, seedoffset=1)
     sut, autoencoder, encoder = loadmodels()
     _, testdata = SystemUnderTest.getdata()
-    X, Y = rand(testdata, m) # `m` samples of testdata
-    @info string("Sampled failure rate: ", failure_rate(sut, X, Y))
 
-    data_collection = []
-
-    local adversary
+    metrics = Metrics()
+    metrics_rand = Metrics()
+    local adversary = nothing # initialize to "no model"
     local mapping
+    local X
+    local Y
 
     # model design iteration: loop t
     for t in 1:T
         @info "Model design interation, loop $t"
-        # pass X to encoder
-        #### encoded_traindata, encoded_testdata = Adversary.splitdata(X, Y, sut, encoder)
+        Random.seed!(t*seedoffset)
+        X, Y = rand(testdata, m) # `m` samples of testdata
+        @info string("Sampled failure rate: ", failure_rate(sut, X, Y))
 
         # model evaluation iteration: loop i
         for i in 1:iters
@@ -68,13 +78,28 @@ function design_iteration(; T=1, iters=1, m=1000, k=10)
             # train adversary using `k` samples of failures from low dimensional representation (linked to true samples)
             # adversary is a classifier that determines if input is a failure or not
             # FIRST STEP: will use supervised learning
-            adversary, encoded_testdata, true_testdata = Adversary.train(X, Y, sut, encoder)
+            adversary, encoded_testdata, true_testdata = Adversary.train(adversary, X, Y, sut, encoder)
             mapping = getmapping(true_testdata) # maps i -> true (x,y)
+
+            # Save out adversary for analysis
+            @save "models/adversary_$t.bson" adversary
 
             ## SUT evaluation
             # pass k samples into SUT to evaluate if they're true failures
-            for debug in [true, false]
-                X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping; k=k, debug=debug)
+            last_num_cands = 0
+            num_actual_failures = 0
+            for selection_mode in [:debug, :adversary, :random]
+                if selection_mode == :debug
+                    X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping; k=k, debug=true)
+                    num_actual_failures = length(X_candidates)
+                elseif selection_mode == :adversary
+                    X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping; k=k)
+                elseif selection_mode == :random
+                    X_candidates, Y_candidates = Adversary.rand_select_candidates(encoded_testdata, mapping, last_num_cands)
+                else
+                    error("No selection mode: $selection_mode")
+                end
+
                 @info "Number of candidate failures: $(length(X_candidates))"
 
                 ## System failure characteristics
@@ -91,21 +116,37 @@ function design_iteration(; T=1, iters=1, m=1000, k=10)
                     @info sut_prediction, true_target, failure, adversary(encoder(x))[1]
                     failures += failure
                 end
-                failure_percent = failures/length(X_candidates)
-                if debug == false
-                    push!(data_collection, isnan(failure_percent) ? 0 : failure_percent)
+                precision = failures/length(X_candidates)
+                precision = isnan(precision) ? 0 : precision
+                recall = failures/num_actual_failures
+                recall = isnan(recall) ? 0 : recall
+                if selection_mode == :adversary
+                    push!(metrics.precision, precision)
+                    push!(metrics.recall, recall)
+                    last_num_cands = length(X_candidates)
+                elseif selection_mode == :random
+                    # Random sampling of encoded_testdata, using the same number of selected candidates as the adversary
+                    push!(metrics_rand.precision, precision)
+                    push!(metrics_rand.recall, recall)
                 end
-                @info "Percent of candidates true failures: $(failures/length(X_candidates))"
+                @info "Precision: $precision"
+                @info "Recall: $recall"
                 println("—"^40)
             end
         end
     end
 
-    @info mean(data_collection)
+    println()
+    println()
+    @info "Random selection precision: $(mean(metrics_rand.precision))"
+    @info "Adversary selection precision: $(mean(metrics.precision))"
+    println("—"^40)
+    @info "Random selection recall: $(mean(metrics_rand.recall))"
+    @info "Adversary selection recall: $(mean(metrics.recall))"
 
     # use adversary to generate failures.
     # TEST: sample from adversary to get failures
-    return X, Y, mapping, adversary
+    return X, Y, mapping, adversary, metrics, metrics_rand
 end
 
 end # module

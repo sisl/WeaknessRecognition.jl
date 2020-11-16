@@ -23,9 +23,9 @@ using Statistics
 CUDA.allowscalar(false)
 
 @with_kw mutable struct Args
-    α::Float64 = 3e-4        # learning rate
+    α::Float64 = 3e-5        # learning rate (default: 3e-4)
     batchsize::Int = 50      # batch size
-    epochs::Int = 30         # number of epochs
+    epochs::Int = 20         # number of epochs
     device::Function = gpu   # set as gpu if available
     throttle::Int = 1        # throttle print every X seconds
     lowdim::Int = 64         # size of low-dimensional representation
@@ -80,7 +80,23 @@ function splitdata(X, Y, sut, encoder, args=Args())
 end
 
 
-function duplicate_failures(X̃_train, Y_train, d=100)
+function convert_data(testdata, sut, encoder)
+    x̃ = reduce(hcat, [encoder(x) for (x,_) in testdata])
+    ỹ = reduce(vcat, [onecold(sut(x)) .!= onecold(y) for (x,y) in testdata])
+    return DataLoader(x̃, ỹ)
+end
+
+
+function num_failures(testdata, sut)
+    num = 0
+    for (x,y) in testdata
+        num += sum(onecold(sut(x)) .!= onecold(y))
+    end
+    return num
+end
+
+
+function duplicate_failures(X̃_train, Y_train, d=10)
     newX = Matrix{eltype(X̃_train)}(undef, size(X̃_train,1), 0)
     newY = Vector{eltype(Y_train)}(undef, 0)
     for (i,y) in enumerate(Y_train)
@@ -115,31 +131,27 @@ function bce(ŷ, y; agg=mean, ϵ=Flux.epseltype(ŷ))
     agg(.- Flux.Losses.xlogy.(y, ŷ .+ ϵ) .- Flux.Losses.xlogy.(1 .- y, 1 .- ŷ .+ ϵ))
 end
 
-function bce_adversary(ŷ, y; Ω=float32(0.9), agg=mean, ϵ=Flux.epseltype(ŷ))
+function bce_adversary(ŷ, y; Ω=float32(0.95), agg=mean, ϵ=Flux.epseltype(ŷ))
     agg(.- Flux.Losses.xlogy.(y .* Ω, ŷ .+ ϵ) .- Flux.Losses.xlogy.((1 .- y) .* (1-Ω), 1 .- ŷ .+ ϵ))
 end
 
-function bce_adversary_multi(ŷ, y; Ω=float32(10), agg=mean, ϵ=Flux.epseltype(ŷ))
+function bce_adversary_multi(ŷ, y; Ω=float32(2), agg=mean, ϵ=Flux.epseltype(ŷ))
     agg(.- Flux.Losses.xlogy.(y .* Ω, ŷ .+ ϵ) .- Flux.Losses.xlogy.((1 .- y), 1 .- ŷ .+ ϵ))
 end
 
-adversarial_loss = bce #_adversary_multi
+adversarial_loss = bce #_adversary #_multi
 
 
 """
 Cost function:
 
-TODO: Binary cross-entropy! with Ω weighting to penalize ...
-TODO: Binary cross-entropy! with Ω weighting to penalize ...
-TODO: Binary cross-entropy! with Ω weighting to penalize ...
-TODO: Binary cross-entropy! with Ω weighting to penalize ...
-TODO: Binary cross-entropy! with Ω weighting to penalize ...
-
-\$\\mathcal{J}(\\mathbf{\\hat{y}}, \\mathbf{y}) = \\frac{1}{m}\\sum \\mathcal{L}(\\hat{y}, y)\$
+\$\\mathcal{J}(\\mathbf{\\hat{y}}, \\mathbf{y}) = \\frac{1}{m}\\sum_{i=1}^m \\mathcal{L}(\\hat{y}_i, y_i)\$
 
 with loss:
 
-\$\\mathcal{L}(\\hat{y}, y) = -\\frac{1}{n}\\sum_{i=1}^n y \\left(\\hat{y} - \\log\\left(\\sum e^{\\hat{y}}\\right)\\right)\$
+\$\\mathcal{L}(\\hat{y}, y) = - y \\log(\\hat y) - (1 - y)\\log(1-\\hat y)\$
+
+\$\\mathcal{L}(\\hat{y}, y) = - y \\log(\\hat y) \\Omega - (1 - y)\\log(1-\\hat y)\$
 """
 cost(dataloader, model) = mean(adversarial_loss(model(x), y) for (x,y) in dataloader)
 
@@ -170,7 +182,7 @@ function failure_accuracy(dataloader, model)
 end
 
 
-function train(X, Y, sut, encoder; kwargs...)
+function train(m, X, Y, sut, encoder; kwargs...)
     # initialize model parameters
     args = Args(; kwargs...)
 
@@ -178,7 +190,12 @@ function train(X, Y, sut, encoder; kwargs...)
     traindata, testdata, _, true_testdata = splitdata(X, Y, sut, encoder, args)
 
     # construct model
-    m = buildmodel(args)
+    if isnothing(m)
+        @info "Building new adversarial model."
+        m = buildmodel(args)
+    else
+        @info "Using input adversarial model."
+    end
     traindata = args.device.(traindata)
     testdata = args.device.(testdata)
     m = args.device(m)
@@ -202,7 +219,7 @@ function train(X, Y, sut, encoder; kwargs...)
 end
 
 
-function predict(m, x, thresh=0.5)
+function predict(m, x, thresh=0.6)
     return cpu(m)(cpu(x)) .>= thresh
 end
 
@@ -213,7 +230,7 @@ function select_candidates(model, testdata, mapping; k=5, debug=false)
     Y_candidates = []
     debug && @warn("select_candidates using true target Y values `debug=true`")
     for (i, (x̃,ỹ)) in enumerate(testdata)
-        ŷ = predict(model, x̃, 0.5) # only select the predictions above X confidence
+        ŷ = predict(model, x̃) # only select the predictions above X confidence
         for (j, ŷⱼ) in enumerate(ŷ)
             if (!debug && ŷⱼ) || (debug && ỹ[j])
                 x, y = mapping[i] # vec(x)
@@ -226,8 +243,26 @@ function select_candidates(model, testdata, mapping; k=5, debug=false)
 end
 
 
-function rand_select_candidates(testdata, k)
-    X_candidates, Y_candidates = rand(testdata, k)
+function rand_select_candidates(testdata, mapping, k)
+    X_candidates, Y_candidates = [], []
+    if k == 0
+        return X_candidates, Y_candidates
+    else
+        testdata = Flux.Data.DataLoader([d[1] for d in testdata], [d[2][1] for d in testdata])
+        rand_idx = rand(1:length(testdata), k)
+
+        for (i, (x̃,ỹ)) in enumerate(testdata)
+            for (j, ỹⱼ) in enumerate(ỹ)
+                for _ in 1:sum(i .== rand_idx) # counts duplicates from rand
+                    x, y = mapping[i] # vec(x)
+                    push!(X_candidates, x[:,j])
+                    push!(Y_candidates, y[:,j])
+                end
+            end
+        end
+        # X_candidates, Y_candidates = rand(testdata, k)
+        return X_candidates, Y_candidates
+    end
 end
 
 
@@ -238,7 +273,7 @@ end
 
 
 function trainandsave(X, Y, sut, encoder; kwargs...)
-    adversary = train(X, Y, sut, encoder; kwargs...)
+    adversary = train(nothing, X, Y, sut, encoder; kwargs...)
     adversary = cpu(adversary)
     @save "models/adversary.bson" adversary
 end
