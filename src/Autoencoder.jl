@@ -19,13 +19,13 @@ using Statistics
     α::Float64 = 1e-3      # learning rate
     epochs::Int = 20       # number of epochs
     N::Int = 64            # size of the encoding (i.e. hidden layer)
-    batchsize::Int = 1000  # batch size for training
+    batchsize::Int = 100   # batch size for training
     num::Int = 20          # number of random digits in the sample image (UNUSED)
     throttle::Int = 1      # throttle timeout (called once every X seconds)
 end
 
 
-global X = MNIST.images()
+global X = MNIST.images(:test) # train using the same validation dataset
 
 
 function get_processed_data(args)

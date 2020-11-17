@@ -138,11 +138,11 @@ function design_iteration(; T=1, iters=1, m=500, k=NaN, seedoffset=1)
 
     println()
     println()
-    @info "Random selection precision: $(mean(metrics_rand.precision))"
-    @info "Adversary selection precision: $(mean(metrics.precision))"
+    @info "Random selection precision: $(round(mean(metrics_rand.precision), digits=4)) ±$(round(std(metrics_rand.precision), digits=2))"
+    @info "Adversary selection precision: $(round(mean(metrics.precision), digits=4)) ±$(round(std(metrics.precision), digits=2))"
     println("—"^40)
-    @info "Random selection recall: $(mean(metrics_rand.recall))"
-    @info "Adversary selection recall: $(mean(metrics.recall))"
+    @info "Random selection recall: $(round(mean(metrics_rand.recall), digits=4)) ±$(round(std(metrics_rand.recall), digits=2))"
+    @info "Adversary selection recall: $(round(mean(metrics.recall), digits=4)) ±$(round(std(metrics.recall), digits=2))"
 
     # use adversary to generate failures.
     # TEST: sample from adversary to get failures

@@ -57,11 +57,11 @@ begin
 		input_size=2,
 		input_arrows=false,
 		input_label=i->"\$x_{$i}\$",
-		hidden_layer_sizes=[4,2],
-		hidden_layer_labels=["ReLU", "ReLU"],
+		hidden_layer_sizes=[4,2,1],
+		hidden_layer_labels=["ReLU", "ReLU", L"\sigma"],
 		output_size=1,
 		output_arrows=false,
-		output_label=i->"\$\\hat{y}_{$i}\$")
+		output_label=i->"\$\\hat{y}\$")
 	tikzadv.tikz.width="12cm"
 	tikzadv
 end
