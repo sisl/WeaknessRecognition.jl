@@ -21,9 +21,11 @@ export
     load,
     predict,
     getdata,
+    Adversary,
     Autoencoder,
     load,
-    autoencoder
+    autoencoder,
+    sampled_validation_iteration
 
 
 @with_kw mutable struct Metrics
@@ -52,9 +54,9 @@ failure_rate(model, X, Y) = round(1 - mean(onecold(model(X)) .== onecold(Y)), di
 
 
 """
-Main model design iteration loop. See diagram for details.
+Main sampled validation iteration loop. See diagram for details.
 """
-function design_iteration(; T=1, iters=1, m=500, k=NaN, seedoffset=1)
+function sampled_validation_iteration(; T=1, iters=1, m=500, seedoffset=1)
     sut, autoencoder, encoder = loadmodels()
     _, testdata = SystemUnderTest.getdata()
 
@@ -65,19 +67,18 @@ function design_iteration(; T=1, iters=1, m=500, k=NaN, seedoffset=1)
     local X
     local Y
 
-    # model design iteration: loop t
+    # sampled validation iteration: loop t
     for t in 1:T
         @info "Model design interation, loop $t"
         Random.seed!(t*seedoffset)
         X, Y = rand(testdata, m) # `m` samples of testdata
         @info string("Sampled failure rate: ", failure_rate(sut, X, Y))
 
-        # model evaluation iteration: loop i
+        # model evaluation iteration: loop i (UNUSED in non-continual version)
         for i in 1:iters
             ## Adversarial step:
-            # train adversary using `k` samples of failures from low dimensional representation (linked to true samples)
+            # train adversary using samples of failures from low dimensional representation (linked to true samples)
             # adversary is a classifier that determines if input is a failure or not
-            # FIRST STEP: will use supervised learning
             adversary, encoded_testdata, true_testdata = Adversary.train(adversary, X, Y, sut, encoder)
             mapping = getmapping(true_testdata) # maps i -> true (x,y)
 
@@ -85,15 +86,15 @@ function design_iteration(; T=1, iters=1, m=500, k=NaN, seedoffset=1)
             @save "models/adversary_$t.bson" adversary
 
             ## SUT evaluation
-            # pass k samples into SUT to evaluate if they're true failures
+            # pass samples into SUT to evaluate if they're true failures
             last_num_cands = 0
             num_actual_failures = 0
             for selection_mode in [:debug, :adversary, :random]
                 if selection_mode == :debug
-                    X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping; k=k, debug=true)
+                    X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping; debug=true)
                     num_actual_failures = length(X_candidates)
                 elseif selection_mode == :adversary
-                    X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping; k=k)
+                    X_candidates, Y_candidates = Adversary.select_candidates(adversary, encoded_testdata, mapping)
                 elseif selection_mode == :random
                     X_candidates, Y_candidates = Adversary.rand_select_candidates(encoded_testdata, mapping, last_num_cands)
                 else
@@ -101,11 +102,6 @@ function design_iteration(; T=1, iters=1, m=500, k=NaN, seedoffset=1)
                 end
 
                 @info "Number of candidate failures: $(length(X_candidates))"
-
-                ## System failure characteristics
-                # determine if SUT output is a true failure (`isfailure`)
-                # determine `distance` metric of failure (softmax-delta)
-                # use those in a reward function that is used by the RL adversary (TODO.)
 
                 ## Run candidate failures on SUT
                 failures = 0

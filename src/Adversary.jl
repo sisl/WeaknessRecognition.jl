@@ -20,7 +20,7 @@ using Flux.Data: DataLoader
 using Flux: @epochs, onehotbatch, onecold, crossentropy, throttle
 using Statistics
 
-include("utils.jl")
+include("Δsoftmax.jl")
 
 CUDA.allowscalar(false)
 
@@ -239,7 +239,7 @@ function predict(m, x, thresh=0.5)
 end
 
 
-function select_candidates(model, testdata, mapping; k=5, debug=false)
+function select_candidates(model, testdata, mapping; debug=false)
     # Run each X_test datapoint over failure classifier model
     X_candidates = []
     Y_candidates = []
