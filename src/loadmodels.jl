@@ -1,7 +1,7 @@
 using CUDA
-using FailureRepresentation
-using FailureRepresentation.SystemUnderTest
-using FailureRepresentation.Autoencoder
+using WeaknessRecognition
+using WeaknessRecognition.SystemUnderTest
+using WeaknessRecognition.Autoencoder
 using Flux
 
 sut = SystemUnderTest.load("models/sut.bson")

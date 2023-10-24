@@ -14,15 +14,15 @@ macro bind(def, element)
 end
 
 # ╔═╡ 4af6dbd0-19b1-11eb-059b-c7ac5d8c4e0d
-using FailureRepresentation
+using WeaknessRecognition
 
 # ╔═╡ 5c706e30-19b1-11eb-18ad-5190eca820b1
 begin
 	using BSON
 	using BSON: load, @load
 	using CUDA
-	using FailureRepresentation.SystemUnderTest
-	using FailureRepresentation.Autoencoder
+	using WeaknessRecognition.SystemUnderTest
+	using WeaknessRecognition.Autoencoder
 	using Flux
 	using Flux: onecold
 	using Flux.Data: DataLoader
@@ -124,7 +124,7 @@ end;
 Δsoftmax(sut, X, Y)
 
 # ╔═╡ 1f747b72-2834-11eb-0015-dd02035ce6bc
-FailureRepresentation.Adversary.bce(0.5, 1) .+ log.(Δsoftmax(sut, X, Y) .+ eps(1.0))
+WeaknessRecognition.Adversary.bce(0.5, 1) .+ log.(Δsoftmax(sut, X, Y) .+ eps(1.0))
 
 # ╔═╡ 8fd9b780-2835-11eb-2698-ed54bb00d2c7
 dl = Flux.Data.DataLoader([1, 1], [2, 2], [3, 3])
@@ -192,7 +192,7 @@ function confusion_adversary(testdata, model, threshold=0.5)
 	confY′_prob = Float64[]
 	for (x,y) in testdata
 		push!(confY, y...)
-		push!(confY′, FailureRepresentation.Adversary.predict(model, x, threshold)...)
+		push!(confY′, WeaknessRecognition.Adversary.predict(model, x, threshold)...)
 		push!(confY′_prob, model(x)...)
 	end
 	return confY, confY′, confY′_prob
@@ -223,7 +223,7 @@ end
 correctrate(confY, confY′)
 
 # ╔═╡ 74419690-27c8-11eb-2bef-95b760034b9f
-FailureRepresentation.SystemUnderTest.accuracy(testdata, sut)
+WeaknessRecognition.SystemUnderTest.accuracy(testdata, sut)
 
 # ╔═╡ 87c13220-27c8-11eb-33a9-7b92300eb881
 M = conf
@@ -477,7 +477,7 @@ function select_bottom_k_false_negatives(model, testdata, k=5, rev=false)
 	predicted_value = []
 	for (i,(x,y)) in enumerate(testdata)
 		# if false negative
-		if y[1] && !FailureRepresentation.Adversary.predict(model, x)[1]
+		if y[1] && !WeaknessRecognition.Adversary.predict(model, x)[1]
 			push!(idx, i)
 			push!(predicted_value, model(x)[1])
 		end
@@ -492,7 +492,7 @@ function select_top_k_true_positives(model, testdata, k=5, rev=true)
 	predicted_value = []
 	for (i,(x,y)) in enumerate(testdata)
 		# if true positive
-		if y[1] && FailureRepresentation.Adversary.predict(model, x)[1]
+		if y[1] && WeaknessRecognition.Adversary.predict(model, x)[1]
 			push!(idx, i)
 			push!(predicted_value, model(x)[1])
 		end

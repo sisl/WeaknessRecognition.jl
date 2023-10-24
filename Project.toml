@@ -1,4 +1,4 @@
-name = "FailureRepresentation"
+name = "WeaknessRecognition"
 uuid = "04a37978-a56a-4ee6-8c04-5ef0dd3b5939"
 authors = ["Robert Moss <mossr@cs.stanford.edu>"]
 version = "0.1.0"

@@ -1,4 +1,4 @@
-The FailureRepresentation.jl package is licensed under the MIT License (Expat):
+The WeaknessRecognition.jl package is licensed under the MIT License (Expat):
 
 > Copyright (c) 2021: Robert Moss.
 > 

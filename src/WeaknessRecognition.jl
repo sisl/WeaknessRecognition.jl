@@ -1,4 +1,4 @@
-module FailureRepresentation
+module WeaknessRecognition
 
 include("SystemUnderTest.jl")
 include("Adversary.jl")

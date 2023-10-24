@@ -1,4 +1,4 @@
-# FailureRepresentation.jl
+# WeaknessRecognition.jl
 
 ### Adversarial Weakness Recognition for Efficient Black-Box Validation
 Final project for [CS230: Deep Learning](https://cs230.stanford.edu/) (Robert Moss: mossr@cs.stanford.edu), consulting with Bernard Lange, who's taking [CS330: Meta Learning](https://cs330.stanford.edu/).
@@ -22,7 +22,7 @@ dev .
 ```
 then you can run
 ```julia
-using FailureRepresentation
+using WeaknessRecognition
 ```
 
 ## Running

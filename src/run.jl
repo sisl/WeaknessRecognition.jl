@@ -1,5 +1,5 @@
 using Revise
-using FailureRepresentation
+using WeaknessRecognition
 using Flux: onecold
 using ImageView
 
